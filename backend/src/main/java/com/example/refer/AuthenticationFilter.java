@@ -1,0 +1,153 @@
+//package com.example.refer;
+//
+//import java.io.IOException;
+//import java.util.Arrays;
+//import java.util.Optional;
+//
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
+//import org.springframework.beans.factory.annotation.Value;
+//import org.springframework.stereotype.Component;
+//
+//import Services.LoginService;
+//import Services.RegistrationService;
+//import entities.User;
+//import jakarta.servlet.Filter;
+//import jakarta.servlet.FilterChain;
+//import jakarta.servlet.ServletException;
+//import jakarta.servlet.ServletRequest;
+//import jakarta.servlet.ServletResponse;
+//import jakarta.servlet.annotation.WebFilter;
+//import jakarta.servlet.http.Cookie;
+//import jakarta.servlet.http.HttpServletRequest;
+//import jakarta.servlet.http.HttpServletResponse;
+//import repositories.LoginRepository;
+//
+//
+//@WebFilter(urlPatterns = { "/*" })
+//@Component
+//public class AuthenticationFilter implements Filter {
+//
+//    private static final Logger logger = LoggerFactory.getLogger(AuthenticationFilter.class);
+//
+//    @Value("${frontend.url}")
+//    private String frontendUrl;
+//
+//    private final LoginService authService;
+//    private final LoginRepository loginRepository;
+//    private final RegistrationService registrationservice;
+//    
+//
+//    private static final String[] UNAUTHENTICATED_PATHS = {
+//            "/auth/login", "/auth/signup"
+//    };
+//
+//    public AuthenticationFilter(LoginService authService, LoginRepository loginRepository, RegistrationService registrationservice) {
+//        System.out.println("Filter Started.");
+//        this.authService = authService;
+//        this.loginRepository = loginRepository;
+//        this.registrationservice = registrationservice;
+//    }
+//
+//    @Override
+//    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+//            throws IOException, ServletException {
+//        try {
+//            executeFilterLogic(request, response, chain);
+//        } catch (Exception e) {
+//            logger.error("Unexpected error in AuthenticationFilter", e);
+//            sendErrorResponse((HttpServletResponse) response,
+//                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+//                    "Internal server error");
+//        }
+//    }
+//
+//    private void executeFilterLogic(ServletRequest request, ServletResponse response, FilterChain chain)
+//            throws IOException, ServletException {
+//
+//        HttpServletRequest httpRequest = (HttpServletRequest) request;
+//        HttpServletResponse httpResponse = (HttpServletResponse) response;
+//
+//        // ✅ Always set CORS headers first
+//        setCORSHeaders(httpResponse);
+//
+//        String requestURI = httpRequest.getRequestURI();
+//        logger.info("Request URI: " + requestURI);
+//
+//        // ✅ Handle preflight (OPTIONS) requests right away
+//        if ("OPTIONS".equalsIgnoreCase(httpRequest.getMethod())) {
+//            httpResponse.setStatus(HttpServletResponse.SC_OK);
+//            return;
+//        }
+//
+//        // ✅ Allow unauthenticated paths (but keep CORS headers)
+//        if (Arrays.asList(UNAUTHENTICATED_PATHS).contains(requestURI)) {
+//            chain.doFilter(request, response);
+//            return;
+//        }
+//
+//        // Extract and validate the token
+//        String token = getAuthTokenFromCookies(httpRequest);
+//        if (token == null || !authService.validateToken(token)) {
+//            sendErrorResponse(httpResponse, HttpServletResponse.SC_UNAUTHORIZED,
+//                    "Unauthorized: Invalid or missing token");
+//            return;
+//        }
+//
+//        // Extract username and verify user
+//       String userid = authService.extractUserid(token);
+//        Optional<User> userOptional = loginRepository.findById(Integer.parseInt(userid));
+//        if (userOptional.isEmpty()) {
+//            sendErrorResponse(httpResponse, HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized: User not found");
+//            return;
+//        }
+//
+//        // Get authenticated user and role
+//        User authenticatedUser = userOptional.get();
+//        
+//        int ID = authenticatedUser.getId();
+//        logger.info("Authenticated User: {}"
+//                , ID);
+//
+//        // Role-based access control
+////        if (requestURI.startsWith("/admin/") && role != Role.ADMIN) {
+////            sendErrorResponse(httpResponse, HttpServletResponse.SC_FORBIDDEN, "Forbidden: Admin access required");
+////            return;
+////        }
+////
+////        if (requestURI.startsWith("/api/") && role != Role.CUSTOMER) {
+////            sendErrorResponse(httpResponse, HttpServletResponse.SC_FORBIDDEN, "Forbidden: Customer access required");
+////            return;
+////        }
+//
+//        // Attach user details to request
+//        httpRequest.setAttribute("authenticatedUserid", ID);
+//        chain.doFilter(request, response);
+//    }
+//
+//    private void setCORSHeaders(HttpServletResponse response) {
+//        response.setHeader("Access-Control-Allow-Origin", frontendUrl);
+//        response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+//        response.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+//        response.setHeader("Access-Control-Allow-Credentials", "true");
+//    }
+//
+//    private void sendErrorResponse(HttpServletResponse response, int statusCode, String message) throws IOException {
+//        setCORSHeaders(response); // ✅ ensure error responses also carry CORS headers
+//        response.setStatus(statusCode);
+//        response.getWriter().write(message);
+//    }
+//
+//    private String getAuthTokenFromCookies(HttpServletRequest request) {
+//        Cookie[] cookies = request.getCookies();
+//        if (cookies != null) {
+//            return Arrays.stream(cookies)
+//                    .filter(cookie -> "authtoken".equals(cookie.getName()))
+//                    .map(Cookie::getValue)
+//                    .findFirst()
+//                    .orElse(null);
+//        }
+//        return null;
+//    }
+//}
+
